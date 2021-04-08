@@ -1,24 +1,25 @@
-FROM ubuntu:14.04
-MAINTAINER Fabio Rehm "fgrehm@gmail.com"
+FROM azul/zulu-openjdk:8
 
-RUN sed 's/main$/main universe/' -i /etc/apt/sources.list && \
-    apt-get update && apt-get install -y software-properties-common && \
-    add-apt-repository ppa:webupd8team/java -y && \
-    apt-get update && \
-    echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | /usr/bin/debconf-set-selections && \
-    apt-get install -y oracle-java8-installer libxext-dev libxrender-dev libxtst-dev && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/* && \
-    rm -rf /tmp/*
+RUN apt-get -qq update && \
+    apt-get -qq -y --no-install-recommends install curl libgtk2.0-0 libcanberra-gtk-module wget git sudo && \
+    rm -rf /var/lib/apt/lists/*
 
-# Install libgtk as a separate step so that we can share the layer above with
-# the netbeans image
-RUN apt-get update && apt-get install -y libgtk2.0-0 libcanberra-gtk-module
-
-RUN wget http://eclipse.c3sl.ufpr.br/technology/epp/downloads/release/luna/SR1/eclipse-java-luna-SR1-linux-gtk-x86_64.tar.gz -O /tmp/eclipse.tar.gz -q && \
+# Install Eclipse now
+RUN wget http://www.eclipse.org/downloads/download.php?file=/technology/epp/downloads/release/luna/SR1/eclipse-jee-luna-SR1-linux-gtk-x86_64.tar.gz -O /tmp/eclipse.tar.gz && \
     echo 'Installing eclipse' && \
     tar -xf /tmp/eclipse.tar.gz -C /opt && \
     rm /tmp/eclipse.tar.gz
+
+# Install Fonts
+RUN apt-get -qq update && \
+    apt-get -y install curl firefox git ttf-dejavu-extra fontconfig cabextract xfonts-utils libmspack0 xterm && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN wget http://ftp.us.debian.org/debian/pool/contrib/m/msttcorefonts/ttf-mscorefonts-installer_3.6_all.deb \
+    && dpkg -i ttf-mscorefonts-installer_3.6_all.deb \
+    && rm -f ttf-mscorefonts-installer_3.6_all.deb \
+    && rm -rf /var/lib/apt/lists/*
+RUN fc-cache -f -v
 
 ADD run /usr/local/bin/eclipse
 
